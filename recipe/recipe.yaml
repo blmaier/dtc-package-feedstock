@@ -17,7 +17,7 @@ source:
     - patches/0003-tests-When-building-.so-from-O-asm-output-mark-as-no.patch
 
 build:
-  number: 5
+  number: 6
   skip: win
 
 outputs:
