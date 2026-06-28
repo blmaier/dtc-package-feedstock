@@ -47,16 +47,6 @@ outputs:
         - bin/fdtoverlay
         - bin/fdtput
     requirements:
-      build:
-        - ${{ compiler('c') }}
-        - ${{ stdlib('c') }}
-        - bison
-        - flex
-        - pkg-config
-        - meson
-      host:
-        - ${{ pin_subpackage("libfdt", exact=True) }}
-        - yaml
       run:
         - ${{ pin_subpackage("libfdt", upper_bound="x.x") }}
     tests:
@@ -83,14 +73,16 @@ outputs:
     inherit: dtc-build
     build:
       script: python -m pip install . -vv --no-deps --no-build-isolation
+      files:
+        - lib/python*/
     requirements:
       build:
         - ${{ compiler('c') }}
         - ${{ stdlib('c') }}
         - if: build_platform != target_platform
-          then: cross-python_${{ target_platform }}
-        - if: build_platform != target_platform
-          then: python ${{ python }}
+          then:
+            - cross-python_${{ target_platform }}
+            - python ${{ python }}
         - swig
       host:
         - ${{ pin_subpackage("libfdt", exact=True) }}
@@ -109,16 +101,15 @@ outputs:
       - files:
           source:
             - if: build_platform == target_platform and linux
-              then: tests/
-            - if: build_platform == target_platform and linux
-              then: build/dtc
-            - if: build_platform == target_platform and linux
-              then: build/tests/test_tree1.dtb
-            - if: build_platform == target_platform and linux
-              then: build/tests/aliases.dtb
+              then:
+                - tests/
+                - build/dtc
+                - build/tests/test_tree1.dtb
+                - build/tests/aliases.dtb
         script:
           - if: build_platform == target_platform and linux
-            then: cd build/tests && NO_PYTHON=0 ../../tests/run_tests.sh -t pylibfdt
+            then:
+              - cd build/tests && NO_PYTHON=0 ../../tests/run_tests.sh -t pylibfdt
     about:
       summary: Python Bindings for Linux Kernel Device Tree library (libfdt)
       description: |
@@ -135,20 +126,10 @@ outputs:
     inherit: dtc-build
     build:
       files:
-        - include/fdt.h
-        - include/libfdt.h
-        - include/libfdt_env.h
+        - include/*
         - lib/libfdt.*
+        - lib/pkgconfig/libfdt.*
     requirements:
-      build:
-        - ${{ compiler('c') }}
-        - ${{ stdlib('c') }}
-        - bison
-        - flex
-        - pkg-config
-        - meson
-      host:
-        - yaml
       run_exports:
         - ${{ pin_subpackage("libfdt", upper_bound="x.x") }}
     tests:
@@ -159,11 +140,12 @@ outputs:
           - test -f $PREFIX/lib/libfdt.a
           - test -f $PREFIX/lib/libfdt${SHLIB_EXT}
           - if: osx
-            then: test -f $PREFIX/lib/libfdt.${{ major_ver }}${SHLIB_EXT}
+            then:
+              - test -f $PREFIX/lib/libfdt.${{ major_ver }}${SHLIB_EXT}
           - if: linux
-            then: test -f $PREFIX/lib/libfdt${SHLIB_EXT}.${{ major_ver }}
-          - if: linux
-            then: test -f $PREFIX/lib/libfdt${SHLIB_EXT}.${{ version }}
+            then:
+              - test -f $PREFIX/lib/libfdt${SHLIB_EXT}.${{ major_ver }}
+              - test -f $PREFIX/lib/libfdt${SHLIB_EXT}.${{ version }}
     about:
       summary: Linux Kernel Device Tree library (libfdt)
       description: |
