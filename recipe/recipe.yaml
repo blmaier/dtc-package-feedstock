@@ -38,7 +38,6 @@ outputs:
       name: dtc
     inherit: dtc-build
     build:
-      script: install.sh
       files:
         - bin/convert-dtsv0
         - bin/dtc
@@ -135,7 +134,6 @@ outputs:
       name: libfdt
     inherit: dtc-build
     build:
-      script: install.sh
       files:
         - include/fdt.h
         - include/libfdt.h
