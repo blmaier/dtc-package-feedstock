@@ -11,6 +11,7 @@ source:
   patches:
     - patches/0001-tests-sw_tree1.c-fix-unitialized-saveptr.patch
     - patches/0002-pylibfdt-libfdt.i-fix-backwards-compatibility-of-ret.patch
+    - patches/0003-tests-When-building-.so-from-O-asm-output-mark-as-no.patch
 
 build:
   number: 5
