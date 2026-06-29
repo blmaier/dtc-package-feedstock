@@ -78,8 +78,6 @@ outputs:
       name: pylibfdt
     inherit: dtc-build
     build:
-      files:
-        - lib/python*/
       python:
         version_independent: true
     requirements:
@@ -118,9 +116,7 @@ outputs:
 
   - package:
       name: libfdt
-    inherit:
-      from: dtc-build
-      run_exports: false
+    inherit: dtc-build
     build:
       files:
         - include/*
