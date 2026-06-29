@@ -13,5 +13,5 @@ else
 fi
 
 meson setup ${MESON_ARGS} -D python=disabled -D tests=$tests build
-meson compile -C build
 meson test -C build
+meson install -C build

@@ -1,0 +1,172 @@
+schema_version: 1
+
+context:
+  version: "1.7.2"
+  major_ver: "${{ (version | split('.'))[0] }}"
+
+recipe:
+  name: dtc-package
+  version: ${{ version }}
+
+source:
+  url: https://git.kernel.org/pub/scm/utils/dtc/dtc.git/snapshot/dtc-${{ version }}.tar.gz
+  sha256: 8f1486962f093f28a2f79f01c1fd82f144ef640ceabe555536d43362212ceb7c
+  patches:
+    - patches/0001-tests-sw_tree1.c-fix-unitialized-saveptr.patch
+    - patches/0002-pylibfdt-libfdt.i-fix-backwards-compatibility-of-ret.patch
+    - patches/0003-tests-When-building-.so-from-O-asm-output-mark-as-no.patch
+
+build:
+  number: 6
+  skip: win
+
+outputs:
+  - staging:
+      name: dtc-build
+    requirements:
+      build:
+        - ${{ compiler('c') }}
+        - ${{ stdlib('c') }}
+        - bison
+        - flex
+        - pkg-config
+        - meson
+      host:
+        - yaml
+
+  - package:
+      name: dtc
+    inherit: dtc-build
+    build:
+      files:
+        - bin/convert-dtsv0
+        - bin/dtc
+        - bin/dtdiff
+        - bin/fdtdump
+        - bin/fdtget
+        - bin/fdtoverlay
+        - bin/fdtput
+    requirements:
+      run:
+        - ${{ pin_subpackage("libfdt", upper_bound="x.x") }}
+    tests:
+      - script:
+          - convert-dtsv0 --help
+          - dtc --help
+          - test -x "$PREFIX"/bin/dtdiff
+          - fdtdump --help
+          - fdtget --help
+          - fdtoverlay --help
+          - fdtput --help
+    about:
+      summary: Linux Kernel Device Tree Compiler (dtc)
+      description: |
+        Device Tree Compiler (dtc) toolchain for working with device
+        tree source and binary files
+      license: GPL-2.0-or-later
+      license_file:
+        - GPL
+        - README.license
+
+  - package:
+      name: pylibfdt
+    inherit: dtc-build
+    build:
+      script: python -m pip install . -vv --no-deps --no-build-isolation
+      files:
+        - lib/python*/
+    requirements:
+      build:
+        - ${{ compiler('c') }}
+        - ${{ stdlib('c') }}
+        - if: build_platform != target_platform
+          then:
+            - cross-python_${{ target_platform }}
+            - python
+        - swig
+      host:
+        - ${{ pin_subpackage("libfdt", exact=True) }}
+        - python
+        - setuptools
+        - pip
+        - yaml
+      run:
+        - ${{ pin_subpackage("libfdt", upper_bound="x.x") }}
+        - python
+    tests:
+      - python:
+          imports:
+            - libfdt
+          pip_check: false
+      - files:
+          source:
+            - if: build_platform == target_platform and linux
+              then:
+                - tests/
+                - build/dtc
+                - build/tests/test_tree1.dtb
+                - build/tests/aliases.dtb
+        script:
+          - if: build_platform == target_platform and linux
+            then:
+              - cd build/tests && NO_PYTHON=0 ../../tests/run_tests.sh -t pylibfdt
+    about:
+      summary: Python Bindings for Linux Kernel Device Tree library (libfdt)
+      description: |
+        Python bindings for libfdt, a utility library for reading and manipulating the Linux Kernel
+        Device Tree binary format.
+      license: GPL-2.0-or-later OR BSD-2-Clause
+      license_file:
+        - GPL
+        - BSD-2-Clause
+        - README.license
+
+  - package:
+      name: libfdt
+    inherit: dtc-build
+    build:
+      files:
+        - include/*
+        - lib/libfdt.*
+        - lib/pkgconfig/libfdt.*
+    requirements:
+      run_exports:
+        - ${{ pin_subpackage("libfdt", upper_bound="x.x") }}
+    tests:
+      - script:
+          - test -f $PREFIX/include/libfdt.h
+          - test -f $PREFIX/include/fdt.h
+          - test -f $PREFIX/include/libfdt_env.h
+          - test -f $PREFIX/lib/libfdt.a
+          - test -f $PREFIX/lib/libfdt${SHLIB_EXT}
+          - if: osx
+            then:
+              - test -f $PREFIX/lib/libfdt.${{ major_ver }}${SHLIB_EXT}
+          - if: linux
+            then:
+              - test -f $PREFIX/lib/libfdt${SHLIB_EXT}.${{ major_ver }}
+              - test -f $PREFIX/lib/libfdt${SHLIB_EXT}.${{ version }}
+    about:
+      summary: Linux Kernel Device Tree library (libfdt)
+      description: |
+        libfdt, a utility library for reading and manipulating the Linux Kernel
+        Device Tree binary format.
+      license: GPL-2.0-or-later OR BSD-2-Clause
+      license_file:
+        - GPL
+        - BSD-2-Clause
+        - README.license
+
+about:
+  summary: Toplevel for subpackages dtc, libfdt and pylibfdt
+  license: GPL-2.0-or-later
+  license_file:
+    - GPL
+    - README.license
+  homepage: https://git.kernel.org/pub/scm/utils/dtc/dtc.git
+
+extra:
+  recipe-maintainers:
+    - timsnyder
+    - blmaier
+  feedstock-name: dtc-package
