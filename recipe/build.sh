@@ -12,6 +12,6 @@ else
     tests=true
 fi
 
-meson setup ${MESON_ARGS} -D python=disabled -D tests=$tests build
-meson test -C build
+meson setup ${MESON_ARGS} -D python=enabled -D yaml=enabled -D tests=$tests build
+NO_COLOR=1 meson test -C build
 meson install -C build
