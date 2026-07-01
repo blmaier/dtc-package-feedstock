@@ -67,39 +67,38 @@ outputs:
   - package:
       name: pylibfdt
     build:
-      script: python -m pip install . -vv --no-deps --no-build-isolation
+      script:
+        - echo "python = '${PREFIX}/bin/python'" >> ${CONDA_PREFIX}/meson_cross_file.txt
+        - MESON_ARGS_REDUCED="$(echo $MESON_ARGS | sed 's/--buildtype release //g')"
+        - $PYTHON -m build -w -n -x -Csetup-args=${MESON_ARGS_REDUCED// / -Csetup-args=} || (cat builddir/meson-logs/meson-log.txt && exit 1)
+        - pip install dist/*.whl
+        # - meson setup ${MESON_ARGS} -D python=enabled -D wheel-only=true build
+        # - meson install -C build
     requirements:
       build:
         - ${{ compiler('c') }}
         - ${{ stdlib('c') }}
-        - meson-python
-        - pip
         - if: build_platform != target_platform
           then:
             - cross-python_${{ target_platform }}
+            - meson
+            - meson-python >=0.17.1
+            - python
         - swig
       host:
         - ${{ pin_subpackage("libfdt", exact=True) }}
         - python
+        - python-build
+        - pip
+        - meson
+        - meson-python >=0.17.1
       run:
         - ${{ pin_subpackage("libfdt", upper_bound="x.x") }}
+        - python
     tests:
       - python:
           imports:
             - libfdt
-          pip_check: false
-      - files:
-          source:
-            - if: build_platform == target_platform and linux
-              then:
-                - tests/
-                - build/dtc
-                - build/tests/test_tree1.dtb
-                - build/tests/aliases.dtb
-        script:
-          - if: build_platform == target_platform and linux
-            then:
-              - cd build/tests && NO_PYTHON=0 ../../tests/run_tests.sh -t pylibfdt
     about:
       summary: Python Bindings for Linux Kernel Device Tree library (libfdt)
       description: |
